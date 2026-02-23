@@ -208,6 +208,11 @@ fn render_request_struct(out: &mut String, operation: &OperationSpec) {
         out.push_str(&format!("    pub {}: {},\n", param.field_name, ty));
     }
 
+    if supports_idempotency_key(operation) {
+        out.push_str("    #[serde(skip_serializing_if = \"Option::is_none\")]\n");
+        out.push_str("    pub idempotency_key: Option<String>,\n");
+    }
+
     if let Some(body) = &operation.body {
         let ty = if body.optional {
             format!("Option<{}>", body.rust_type)
@@ -250,6 +255,9 @@ fn render_request_struct(out: &mut String, operation: &OperationSpec) {
                 ));
             }
         }
+        if supports_idempotency_key(operation) {
+            out.push_str("            idempotency_key: None,\n");
+        }
         if let Some(body) = &operation.body {
             if body.optional {
                 out.push_str("            body: None,\n");
@@ -272,6 +280,9 @@ fn render_request_struct(out: &mut String, operation: &OperationSpec) {
                 out.push_str(&format!("            {},\n", param.field_name));
             }
         }
+        if supports_idempotency_key(operation) {
+            out.push_str("            idempotency_key: None,\n");
+        }
         if let Some(body) = &operation.body {
             if body.optional {
                 out.push_str("            body: None,\n");
@@ -292,6 +303,13 @@ fn render_request_struct(out: &mut String, operation: &OperationSpec) {
             "        self.{} = Some(value);\n",
             param.field_name
         ));
+        out.push_str("        self\n");
+        out.push_str("    }\n");
+    }
+
+    if supports_idempotency_key(operation) {
+        out.push_str("    pub fn with_idempotency_key(mut self, value: String) -> Self {\n");
+        out.push_str("        self.idempotency_key = Some(value);\n");
         out.push_str("        self\n");
         out.push_str("    }\n");
     }
@@ -339,6 +357,12 @@ fn render_method(out: &mut String, operation: &OperationSpec) {
     out.push_str("        let mut path_params = std::collections::BTreeMap::new();\n");
     out.push_str("        let mut query_params = Vec::new();\n");
     out.push_str("        let mut headers = Vec::new();\n");
+
+    if supports_idempotency_key(operation) {
+        out.push_str("        if let Some(value) = request.idempotency_key {\n");
+        out.push_str("            headers.push((\"Idempotency-Key\".to_string(), value));\n");
+        out.push_str("        }\n");
+    }
 
     for param in &operation.params {
         match (param.location, param.optional, param.is_vec) {
@@ -535,6 +559,10 @@ fn render_method(out: &mut String, operation: &OperationSpec) {
         operation.response.response_struct
     ));
     out.push_str("    }\n\n");
+}
+
+fn supports_idempotency_key(operation: &OperationSpec) -> bool {
+    operation.http_method == "POST"
 }
 
 fn write_content_type_expr(out: &mut String, content_type: Option<&str>) {

@@ -38,3 +38,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+## Webhook ヘルパー
+
+```rust
+use stripe_sdk::webhook;
+
+fn handle_webhook(raw_body: &[u8], stripe_signature: &str) -> Result<(), webhook::StripeWebhookError> {
+    let endpoint_secret = "whsec_xxx";
+
+    let event = webhook::construct_event(raw_body, stripe_signature, endpoint_secret)?;
+    println!("event type = {}", event.param_type);
+
+    Ok(())
+}
+```
+
+- 署名検証のみ: `webhook::verify_signature(...)`
+- 任意型へパース: `webhook::construct_event_as::<T>(...)`

@@ -4,6 +4,8 @@ This repository provides an SDK written in Rust to help you interact with the St
 
 Developed by [Finite Field, K.K.](https://finitefield.org)
 
+Japanese: [translations/ja/README.md](translations/ja/README.md)
+
 ## Implementation Approach
 
 - `build.rs` reads `spec/openapi.spec3.json` and automatically generates dedicated methods for each `operationId`.
@@ -38,3 +40,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+## Webhook Helpers
+
+```rust
+use stripe_sdk::webhook;
+
+fn handle_webhook(raw_body: &[u8], stripe_signature: &str) -> Result<(), webhook::StripeWebhookError> {
+    let endpoint_secret = "whsec_xxx";
+
+    let event = webhook::construct_event(raw_body, stripe_signature, endpoint_secret)?;
+    println!("event type = {}", event.param_type);
+
+    Ok(())
+}
+```
+
+- Verify only: `webhook::verify_signature(...)`
+- Parse to custom type: `webhook::construct_event_as::<T>(...)`
