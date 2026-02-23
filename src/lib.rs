@@ -538,7 +538,7 @@ pub mod webhook {
 
 #[cfg(test)]
 mod tests {
-    use super::{GENERATED_OPERATION_COUNT, render_path, webhook};
+    use super::{GENERATED_OPERATION_COUNT, PostCheckoutSessionsRequest, render_path, webhook};
     use hmac::{Hmac, Mac};
     use sha2::Sha256;
     use std::collections::BTreeMap;
@@ -627,6 +627,34 @@ mod tests {
 
         let event: MinimalEvent = webhook::construct_event_as(payload, &signature, secret).unwrap();
         assert_eq!(event.id, "evt_test_456");
+    }
+
+    #[test]
+    fn request_supports_custom_headers() {
+        let request = PostCheckoutSessionsRequest::new()
+            .with_header("Idempotency-Key", "checkout_session_order_123")
+            .with_header("Stripe-Account", "acct_123")
+            .with_headers(vec![(
+                "X-App-Version".to_string(),
+                "2026-02-23".to_string(),
+            )]);
+
+        assert_eq!(request.extra_headers.len(), 3);
+        assert_eq!(
+            request.extra_headers[0],
+            (
+                "Idempotency-Key".to_string(),
+                "checkout_session_order_123".to_string()
+            )
+        );
+        assert_eq!(
+            request.extra_headers[1],
+            ("Stripe-Account".to_string(), "acct_123".to_string())
+        );
+        assert_eq!(
+            request.extra_headers[2],
+            ("X-App-Version".to_string(), "2026-02-23".to_string())
+        );
     }
 
     fn unix_time_now() -> i64 {

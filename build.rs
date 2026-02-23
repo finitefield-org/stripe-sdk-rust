@@ -94,7 +94,9 @@ fn main() {
     let manifest_dir =
         PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("missing CARGO_MANIFEST_DIR"));
     let spec_path = manifest_dir.join("spec/openapi.spec3.json");
+    let build_script_path = manifest_dir.join("build.rs");
 
+    println!("cargo:rerun-if-changed={}", build_script_path.display());
     println!("cargo:rerun-if-changed={}", spec_path.display());
 
     let raw = fs::read_to_string(&spec_path).expect("failed to read spec/openapi.spec3.json");
@@ -208,6 +210,9 @@ fn render_request_struct(out: &mut String, operation: &OperationSpec) {
         out.push_str(&format!("    pub {}: {},\n", param.field_name, ty));
     }
 
+    out.push_str("    #[serde(default, skip_serializing_if = \"Vec::is_empty\")]\n");
+    out.push_str("    pub extra_headers: Vec<(String, String)>,\n");
+
     if supports_idempotency_key(operation) {
         out.push_str("    #[serde(skip_serializing_if = \"Option::is_none\")]\n");
         out.push_str("    pub idempotency_key: Option<String>,\n");
@@ -255,6 +260,7 @@ fn render_request_struct(out: &mut String, operation: &OperationSpec) {
                 ));
             }
         }
+        out.push_str("            extra_headers: Vec::new(),\n");
         if supports_idempotency_key(operation) {
             out.push_str("            idempotency_key: None,\n");
         }
@@ -280,6 +286,7 @@ fn render_request_struct(out: &mut String, operation: &OperationSpec) {
                 out.push_str(&format!("            {},\n", param.field_name));
             }
         }
+        out.push_str("            extra_headers: Vec::new(),\n");
         if supports_idempotency_key(operation) {
             out.push_str("            idempotency_key: None,\n");
         }
@@ -306,6 +313,18 @@ fn render_request_struct(out: &mut String, operation: &OperationSpec) {
         out.push_str("        self\n");
         out.push_str("    }\n");
     }
+
+    out.push_str(
+        "    pub fn with_header(\n        mut self,\n        key: impl Into<String>,\n        value: impl Into<String>,\n    ) -> Self {\n",
+    );
+    out.push_str("        self.extra_headers.push((key.into(), value.into()));\n");
+    out.push_str("        self\n");
+    out.push_str("    }\n");
+
+    out.push_str("    pub fn with_headers(mut self, headers: Vec<(String, String)>) -> Self {\n");
+    out.push_str("        self.extra_headers.extend(headers);\n");
+    out.push_str("        self\n");
+    out.push_str("    }\n");
 
     if supports_idempotency_key(operation) {
         out.push_str("    pub fn with_idempotency_key(mut self, value: String) -> Self {\n");
@@ -357,9 +376,11 @@ fn render_method(out: &mut String, operation: &OperationSpec) {
     out.push_str("        let mut path_params = std::collections::BTreeMap::new();\n");
     out.push_str("        let mut query_params = Vec::new();\n");
     out.push_str("        let mut headers = Vec::new();\n");
+    out.push_str("        headers.extend(request.extra_headers);\n");
 
     if supports_idempotency_key(operation) {
         out.push_str("        if let Some(value) = request.idempotency_key {\n");
+        out.push_str("            headers.retain(|(key, _)| !key.eq_ignore_ascii_case(\"Idempotency-Key\"));\n");
         out.push_str("            headers.push((\"Idempotency-Key\".to_string(), value));\n");
         out.push_str("        }\n");
     }

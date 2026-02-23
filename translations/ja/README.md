@@ -14,7 +14,9 @@ Developed by [Finite Field, K.K.](https://finitefield.org)
 
 ```rust
 use serde_json::json;
-use stripe_sdk::{GetCustomersRequest, PostCustomersRequest, StripeClient};
+use stripe_sdk::{
+    GetCustomersRequest, PostCheckoutSessionsRequest, PostCustomersRequest, StripeClient,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,6 +36,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .await?;
     println!("create status = {}", created.status);
+
+    let checkout = client
+        .post_checkout_sessions(
+            PostCheckoutSessionsRequest::new()
+                .with_header("Idempotency-Key", "checkout_session_order_123")
+                .with_body(json!({
+                    "mode": "payment",
+                    "success_url": "https://example.com/success",
+                    "cancel_url": "https://example.com/cancel",
+                    "line_items": [{
+                        "price": "price_123",
+                        "quantity": 1
+                    }]
+                })),
+        )
+        .await?;
+    println!("checkout status = {}", checkout.status);
 
     Ok(())
 }
