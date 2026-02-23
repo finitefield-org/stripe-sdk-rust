@@ -2,8 +2,23 @@
 name = "stripe-sdk"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
 description = "Rust SDK for working with the Stripe API"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/finitefield-org/stripe-sdk"
+homepage = "https://github.com/finitefield-org/stripe-sdk"
+documentation = "https://docs.rs/stripe-sdk"
+keywords = ["stripe", "sdk", "api", "payments"]
+categories = ["api-bindings", "web-programming::http-client"]
+include = [
+    "/src/**",
+    "/build.rs",
+    "/spec/openapi.spec3.json",
+    "/README.md",
+    "/LICENSE",
+    "/Cargo.toml",
+]
 
 [dependencies]
 percent-encoding = "2.3"
