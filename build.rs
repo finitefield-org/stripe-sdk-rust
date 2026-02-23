@@ -1350,9 +1350,18 @@ fn sanitize_method_name(name: &str) -> String {
 
 fn sanitize_type_name(name: &str) -> String {
     let mut out = String::new();
+    let mut capitalize = true;
+
     for ch in name.chars() {
         if ch.is_ascii_alphanumeric() {
-            out.push(ch);
+            if capitalize {
+                out.push(ch.to_ascii_uppercase());
+            } else {
+                out.push(ch);
+            }
+            capitalize = false;
+        } else {
+            capitalize = true;
         }
     }
 
@@ -1366,6 +1375,10 @@ fn sanitize_type_name(name: &str) -> String {
         .is_some_and(|first| first.is_ascii_digit())
     {
         out.insert(0, 'T');
+    }
+
+    if is_rust_keyword(&out) {
+        out.push_str("Type");
     }
 
     out

@@ -271,14 +271,7 @@ fn render_path(template: &str, params: &BTreeMap<String, String>) -> Result<Stri
     Ok(rendered)
 }
 
-#[allow(
-    clippy::all,
-    dead_code,
-    non_camel_case_types,
-    unused_imports,
-    unused_mut,
-    unused_variables
-)]
+#[allow(clippy::all, dead_code, unused_imports, unused_mut, unused_variables)]
 mod generated {
     use super::*;
     include!(concat!(env!("OUT_DIR"), "/generated.rs"));
