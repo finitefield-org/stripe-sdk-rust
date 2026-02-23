@@ -4,37 +4,34 @@
 
 ## 実装方針
 
-- `spec/openapi.spec3.json` を `build.rs` が読み取り、全 `operationId` の定義をコンパイル時に自動生成します。
-- `StripeClient::call("<operationId>", ...)` で、OpenAPI に沿った HTTP メソッド/パスを使って呼び出せます。
-- v1 の `application/x-www-form-urlencoded` と v2 の `application/json` を `RequestBody::Auto` で自動選択します。
+- `spec/openapi.spec3.json` を `build.rs` が読み取り、各 `operationId` ごとの専用メソッドを自動生成します。
+- リクエストは operation ごとの専用 `*Request` 型で扱います。
+- レスポンスは operation ごとの専用 `*Response` 型で返し、`body` も operation ごとに専用型（`*ResponseBody`）になります。
 
 ## 使い方
 
 ```rust
 use serde_json::json;
-use stripe_sdk::{CallRequest, StripeClient};
+use stripe_sdk::{GetCustomersRequest, PostCustomersRequest, StripeClient};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = StripeClient::new("sk_test_xxx")?;
 
-    // GET /v1/customers
-    let response = client
-        .call("GetCustomers", CallRequest::new().query_param("limit", "3"))
+    let list = client
+        .get_customers(GetCustomersRequest::new().with_limit(3))
         .await?;
+    println!("list status = {}", list.status);
 
-    println!("status = {}", response.status());
-
-    // POST /v1/customers
-    let _created = client
-        .call(
-            "PostCustomers",
-            CallRequest::new().auto_body(json!({
+    let created = client
+        .post_customers(
+            PostCustomersRequest::new().with_body(json!({
                 "name": "Acme Inc.",
                 "email": "dev@example.com"
             })),
         )
         .await?;
+    println!("create status = {}", created.status);
 
     Ok(())
 }
