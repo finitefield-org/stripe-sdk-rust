@@ -1,16 +1,16 @@
 # stripe-sdk
 
-This repository provides an SDK written in Rust to help you interact with the Stripe API.
+このレポジトリは、Stripe API を操作するのに役立つ Rust 製 SDK を提供します。
 
 Developed by [Finite Field, K.K.](https://finitefield.org)
 
-## Implementation Approach
+## 実装方針
 
-- `build.rs` reads `spec/openapi.spec3.json` and automatically generates dedicated methods for each `operationId`.
-- Requests are handled with operation-specific `*Request` types.
-- Responses are returned as operation-specific `*Response` types, and `body` is also an operation-specific type (`*ResponseBody`).
+- `spec/openapi.spec3.json` を `build.rs` が読み取り、各 `operationId` ごとの専用メソッドを自動生成します。
+- リクエストは operation ごとの専用 `*Request` 型で扱います。
+- レスポンスは operation ごとの専用 `*Response` 型で返し、`body` も operation ごとに専用型（`*ResponseBody`）になります。
 
-## Usage
+## 使い方
 
 ```rust
 use serde_json::json;
