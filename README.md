@@ -2,6 +2,8 @@
 
 このレポジトリは、Stripe API を操作するのに役立つ Rust 製 SDK を提供します。
 
+Developed by [Finite Field, K.K.](https://finitefield.org)
+
 ## 実装方針
 
 - `spec/openapi.spec3.json` を `build.rs` が読み取り、各 `operationId` ごとの専用メソッドを自動生成します。
